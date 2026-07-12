@@ -44,8 +44,14 @@ if DATABASE_URL:
     app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 else:
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(instance_path, 'studyhub.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JSON_SORT_KEYS'] = False
+
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "studyhub-development-key"
+)
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JSON_SORT_KEYS"] = False
 
 # Initialize extensions
 db.init_app(app)
