@@ -23,7 +23,7 @@ def get_libraries():
     return jsonify(libraries)
 
 @app.route('/api/libraries/<int:lib_id>', methods=['GET'])
-def get_library(lib_id):
+def api_get_library(lib_id):
     lib = next((l for l in libraries if l["id"] == lib_id), None)
     return jsonify(lib) if lib else (jsonify({"error": "Not found"}), 404)
 
