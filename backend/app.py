@@ -56,9 +56,9 @@ app.config["JSON_SORT_KEYS"] = False
 # Initialize extensions
 db.init_app(app)
 
-# Initialize database with dummy data
-init_db(app)
-
+# Initialize database only if enabled
+if os.environ.get("INIT_DB") == "true":
+    init_db(app)
 
 # ==================== ROUTES ====================
 
