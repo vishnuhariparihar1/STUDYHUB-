@@ -19,7 +19,7 @@ libraries = [
 ]
 
 @app.route('/api/libraries', methods=['GET'])
-def get_libraries():
+def get_all_libraries():
     return jsonify(libraries)
 
 @app.route('/api/libraries/<int:lib_id>', methods=['GET'])
