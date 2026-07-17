@@ -12,20 +12,7 @@ CORS(app)
 
 # This is your data source. 
 # Later, you will replace this list with: db.session.query(Library).all()
-libraries = [
-    { ... },
-    { ... },
-    { ... }
-]
 
-@app.route('/api/libraries', methods=['GET'])
-def get_all_libraries():
-    return jsonify(libraries)
-
-@app.route('/api/libraries/<int:lib_id>', methods=['GET'])
-def api_get_library(lib_id):
-    lib = next((l for l in libraries if l["id"] == lib_id), None)
-    return jsonify(lib) if lib else (jsonify({"error": "Not found"}), 404)
 
 from database import db, init_db, User, Library, Booking, EntryPass
 
@@ -77,10 +64,23 @@ def get_libraries():
     libraries = Library.query.all()
     return jsonify({
         'status': 'success',
-        'data': [lib.to_dict() for lib in libraries]
+        'data': [library.to_dict() for library in libraries]
     }), 200
 
+@app.route('/api/libraries/<int:library_id>', methods=['GET'])
+def get_library_by_id(library_id):
+    library = db.session.get(Library, library_id)
 
+    if not library:
+        return jsonify({
+            'status': 'error',
+            'message': 'Library not found'
+        }), 404
+
+    return jsonify({
+        'status': 'success',
+        'data': library.to_dict()
+    }), 200
 # Authentication
 @app.route('/api/auth/signup', methods=['POST'])
 def signup_user():
