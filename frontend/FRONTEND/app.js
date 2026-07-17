@@ -1,18 +1,8 @@
 // ==========================================
-// 1. DUMMY DATABASE (Libraries & Books)
+// 1.  DATABASE (Libraries & Books)
 // ==========================================
-const libraries = [
-    { id: 1, name: "Central City Library", location: "Connaught Place, New Delhi", seats: 50, availableSeats: 23, priceHourly: 50, image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=800&q=80", mapQuery: "Connaught+Place+New+Delhi" },
-    { id: 2, name: "University Study Hub", location: "North Campus, Delhi", seats: 80, availableSeats: 45, priceHourly: 40, image: "https://images.unsplash.com/photo-1568667256549-094345857637?w=800&q=80", mapQuery: "Delhi+University+North+Campus" },
-    { id: 3, name: "Quiet Corner Library", location: "Green Park, New Delhi", seats: 30, availableSeats: 5, priceHourly: 60, image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80", mapQuery: "Green+Park+New+Delhi" },
-    { id: 4, name: "Knowledge Tree Room", location: "Koramangala, Bengaluru", seats: 40, availableSeats: 12, priceHourly: 55, image: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80", mapQuery: "Koramangala+Bengaluru" },
-    { id: 5, name: "Scholars Hub", location: "Andheri West, Mumbai", seats: 100, availableSeats: 60, priceHourly: 70, image: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?w=800&q=80", mapQuery: "Andheri+West+Mumbai" },
-    { id: 6, name: "The Reading Pod", location: "Salt Lake, Kolkata", seats: 25, availableSeats: 5, priceHourly: 35, image: "https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800&q=80", mapQuery: "Salt+Lake+Kolkata" },
-    { id: 7, name: "Focus Workspace", location: "Anna Nagar, Chennai", seats: 60, availableSeats: 30, priceHourly: 45, image: "https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?w=800&q=80", mapQuery: "Anna+Nagar+Chennai" },
-    { id: 8, name: "Elite Study Center", location: "Viman Nagar, Pune", seats: 75, availableSeats: 20, priceHourly: 50, image: "https://images.unsplash.com/photo-1532012197267-da84d127e9b5?w=800&q=80", mapQuery: "Viman+Nagar+Pune" },
-    { id: 9, name: "Banjara Reading Room", location: "Banjara Hills, Hyderabad", seats: 45, availableSeats: 10, priceHourly: 65, image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80", mapQuery: "Banjara+Hills+Hyderabad" },
-    { id: 10, name: "Zenith Library", location: "Sector 17, Chandigarh", seats: 55, availableSeats: 40, priceHourly: 40, image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&q=80", mapQuery: "Sector+17+Chandigarh" }
-];
+let libraries = [];
+const API_BASE = "https://studyhub-oofv.onrender.com";
 
 const booksData = [
     { id: 1, title: "The Great Gatsby", author: "F. Scott Fitzgerald", category: "Fiction", price: 80, location: "Central City Library", cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&q=80" },
@@ -27,33 +17,6 @@ const booksData = [
     { id: 10, title: "Clean Code", author: "Robert C. Martin", category: "Reference", price: 300, location: "Banjara Reading Room", cover: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&q=80" }
 ];
 
-// Enrich Library Data Dynamically
-libraries.forEach(l => {
-    l.bookedSeats = l.seats - l.availableSeats;
-    l.rating = (Math.random() * (5.0 - 4.1) + 4.1).toFixed(1);
-    l.facilities = {
-        ac: "Yes",
-        ro: "Yes",
-        wifi: "Free High-Speed",
-        cafe: Math.random() > 0.5 ? "Yes" : "No",
-        clean: (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1) + "/5"
-    };
-    l.pricing = {
-        oneHr: l.priceHourly,
-        twoHr: Math.round(l.priceHourly * 1.8),
-        halfDay: Math.round(l.priceHourly * 3.5),
-        fullDay: Math.round(l.priceHourly * 6.5),
-        night: Math.round(l.priceHourly * 5),
-        weekly: Math.round(l.priceHourly * 25),
-        monthly: Math.round(l.priceHourly * 80)
-    };
-    // Fetch stored reviews from local storage or use defaults
-    const storedReviews = JSON.parse(localStorage.getItem(`reviews_${l.id}`)) || [];
-    l.reviews = storedReviews.length > 0 ? storedReviews : [
-        { user: "Aman", rating: 5, text: "Excellent environment for serious studying.", date: "10/07/2026" },
-        { user: "Priya", rating: 4, text: "Good wifi and clean desks.", date: "05/07/2026" }
-    ];
-});
 
 
 // ==========================================
@@ -291,9 +254,101 @@ function saveProfile() {
 // ==========================================
 // 6. LIBRARIES & DETAILS
 // ==========================================
+
+async function loadLibraries() {
+    try {
+        const response = await fetch(`${API_BASE}/api/libraries`);
+
+        if (!response.ok) {
+            throw new Error(`Unable to load libraries. HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.status !== "success" || !Array.isArray(result.data)) {
+            throw new Error(result.message || "Invalid library data received");
+        }
+
+        libraries = result.data.map(lib => {
+            const priceHourly = 50;
+            const storedReviews =
+                JSON.parse(localStorage.getItem(`reviews_${lib.id}`)) || [];
+
+            return {
+                id: lib.id,
+                name: lib.name,
+                location: lib.location,
+                seats: lib.total_seats,
+                availableSeats: lib.total_seats,
+                bookedSeats: 0,
+                priceHourly,
+                image: lib.image,
+                mapQuery: encodeURIComponent(lib.location),
+                rating: lib.rating || 4.5,
+
+                facilities: {
+                    ac: "Yes",
+                    ro: "Yes",
+                    wifi: "Free High-Speed",
+                    cafe: "Yes",
+                    clean: "4.8/5"
+                },
+
+                pricing: {
+                    oneHr: priceHourly,
+                    twoHr: Math.round(priceHourly * 1.8),
+                    halfDay: Math.round(priceHourly * 3.5),
+                    fullDay: Math.round(priceHourly * 6.5),
+                    night: Math.round(priceHourly * 5),
+                    weekly: Math.round(priceHourly * 25),
+                    monthly: Math.round(priceHourly * 80)
+                },
+
+                reviews: storedReviews.length > 0
+                    ? storedReviews
+                    : [
+                        {
+                            user: "Aman",
+                            rating: 5,
+                            text: "Excellent environment for serious studying.",
+                            date: "10/07/2026"
+                        },
+                        {
+                            user: "Priya",
+                            rating: 4,
+                            text: "Good Wi-Fi and clean desks.",
+                            date: "05/07/2026"
+                        }
+                    ]
+            };
+        });
+
+        renderLibraries();
+    } catch (error) {
+        console.error("Backend connection error:", error);
+        showToast("Unable to load libraries from backend.", "danger");
+        renderLibraries();
+    }
+}
+
 function renderLibraries() {
     const list = document.getElementById('library-list');
+
+    if (!list) {
+        return;
+    }
+
     list.innerHTML = '';
+
+    if (libraries.length === 0) {
+        list.innerHTML = `
+            <div class="card" style="padding:1rem;">
+                <p style="color:var(--text-secondary);">No libraries found.</p>
+            </div>
+        `;
+        return;
+    }
+
     libraries.forEach(l => {
         const card = document.createElement('div');
         card.className = 'card animate-fade';
@@ -658,29 +713,20 @@ function renderPaymentHistory() {
 
 // --- 11. INITIALIZATION ---
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Restore user session if it exists
-    const storedUser = JSON.parse(localStorage.getItem('studyHubUser'));
-    if(storedUser && storedUser.email) {
+    const storedData = localStorage.getItem('studyHubUser');
+    const storedUser = storedData ? JSON.parse(storedData) : null;
+
+    if (storedUser && storedUser.email) {
         state.isLoggedIn = true;
-        state.userName = storedUser.name;
-        state.userEmail = storedUser.email;
-        state.userPassword = storedUser.password;
+        state.userName = storedUser.name || '';
+        state.userEmail = storedUser.email || '';
+        state.userPassword = storedUser.password || '';
+        state.userPhone = storedUser.phone || '';
+        state.userGoal = storedUser.goal || '';
     }
-    
-    // 2. Fetch real data from your Python backend instead of using the dummy 'libraries' array
-    fetch('http://127.0.0.1:5000/api/libraries')
-        .then(response => response.json())
-        .then(data => {
-            // This replaces the old renderLibraries() call
-            // We pass the REAL data from Python to your render function
-            renderLibraries(data); 
-        })
-        .catch(err => {
-            console.error("Backend not connected:", err);
-            showToast("Backend not connected! Using offline mode.", "danger");
-            renderLibraries(); // Fallback to local dummy data if backend is off
-        });
-    
+
+    loadLibraries();
     applyAuthState();
+
     window.addEventListener('resize', applyAuthState);
 });
